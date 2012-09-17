@@ -1326,7 +1326,6 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
                         }
                     }
                 }
-                FBTrace.sysout("disabledProps", {disabledProps:disabledProps, propName: propName, text: text});
             }
             var cssValue;
 
@@ -1725,10 +1724,11 @@ CSSEditor.prototype = domplate(Firebug.InlineEditor.prototype,
                     // Record the original CSS text for the inline case so we can reconstruct at a later
                     // point for diffing purposes
                     var baseText = rule.style ? rule.style.cssText : rule.cssText;
-  
-                    propValue = rule.style.getPropertyValue(previousValue);
+
+                    propValue = Firebug.getRepObject(row.getElementsByClassName("cssPropValue").
+                        item(0));
                     parsedValue = parsePriority(propValue);
-  
+
                     if (FBTrace.DBG_CSS)
                         FBTrace.sysout("CSSEditor.saveEdit : " + previousValue + "->" + value +
                             " = " + propValue);
@@ -1741,7 +1741,7 @@ CSSEditor.prototype = domplate(Firebug.InlineEditor.prototype,
   
                         if (previousValue)
                             CSSModule.removeProperty(rule, previousValue);
-  
+
                         CSSModule.setProperty(rule, value, parsedValue.value,
                             parsedValue.priority);
                     }
@@ -1784,6 +1784,7 @@ CSSEditor.prototype = domplate(Firebug.InlineEditor.prototype,
             if (value)
             {
                 var saveSuccess = !!rule.style.getPropertyValue(propName || value);
+
                 if(!saveSuccess && !propName)
                 {
                     propName = value.replace(/-./g, function(match)
