@@ -78,7 +78,7 @@ var CSSPropTag = domplate(CSSDomplateBase,
             // Use a space here, so that "copy to clipboard" has it (issue 3266).
             SPAN({"class": "cssColon"}, ":&nbsp;"),
             SPAN({"class": "cssPropValue", $editable: "$rule|isEditable",
-                    _repObject: "$prop.value"},
+                    _repObject: "$prop.value$prop.important"},
                 "$prop|getPropertyValue$prop.important"
             ),
             SPAN({"class": "cssSemi"}, ";"
@@ -1299,7 +1299,35 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
             var styleRule = Firebug.getRepObject(prop);
             var propNameNode = prop.getElementsByClassName("cssPropName").item(0);
             var propName = propNameNode.textContent.toLowerCase();
-            var text = styleRule.style.getPropertyValue(propName);
+            var priority = styleRule.style.getPropertyPriority(propName);
+            var text = styleRule.style.getPropertyValue(propName) +
+                (priority ? " "+priority : "");
+
+            if (text != "")
+            {
+                if (Options.get("colorDisplay") == "hex")
+                    text = Css.rgbToHex(text);
+                else if (Options.get("colorDisplay") == "hsl")
+                    text = Css.rgbToHSL(text);
+            }
+            else
+            {
+                var disabledMap = this.getDisabledMap(this.context);
+                var disabledProps = disabledMap.get(styleRule);
+                if (disabledProps)
+                {
+                    for (var i = 0, len = disabledProps.length; i < len; ++i)
+                    {
+                        if (disabledProps[i].name == propName)
+                        {
+                            priority = disabledProps[i].important;
+                            text = disabledProps[i].value + (priority ? " "+priority : "");
+                            break;
+                        }
+                    }
+                }
+                FBTrace.sysout("disabledProps", {disabledProps:disabledProps, propName: propName, text: text});
+            }
             var cssValue;
 
             if (propName == "font" || propName == "font-family")
